@@ -42,9 +42,9 @@ export class FSRS extends FSRSAlgorithm {
   }
 
   /**
-   * @param card Card to be processed
-   * @param now Current time or scheduled time
-   * @param afterHandler Convert the result to another type. (Optional)
+   * @param card 待处理的卡
+   * @param now 当前时间或预定时间
+   * @param afterHandler 将结果转换为另一种类型。（可选）
    * @example
    * ```
    * const card: Card = createEmptyCard(new Date());
