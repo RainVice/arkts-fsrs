@@ -5,7 +5,7 @@ export * from "./algorithm"
 export * from "./fsrs";
 
 export * from "./type";
-export type {
+export {
   FSRSParameters,
   Card,
   ReviewLog,

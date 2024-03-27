@@ -1,15 +1,60 @@
+import { Card, createEmptyCard, fsrs, FSRS, FsrsDate, Grade, ReviewLog } from '../fsrs';
+
 @Entry
 @Component
 struct Index {
-  @State message: string = 'Hello World';
+  @State card: Card = createEmptyCard();
+  @State f: FSRS = fsrs();
+  @State logs: ReviewLog[] = []
+  @State cards: Card[] = []
+
+
+  handleClick(grade:Grade){
+    const log = this.f.repeat(this.card,new FsrsDate())[grade].log;
+    this.card = this.f.repeat(this.card,new FsrsDate())[grade].card;
+
+    this.logs.unshift(log);
+    this.cards.unshift(this.card);
+  }
+
 
   build() {
     Row() {
       Column() {
-        Text(this.message)
-          .fontSize(50)
-          .width('90%')
-          .fontWeight(FontWeight.Bold)
+        Row(){
+          //export enum Grade {
+          //   Again = 1,
+          //   Hard = 2,
+          //   Good = 3,
+          //   Easy = 4,
+          // }
+          Button("重来")
+            .onClick(() => {
+              this.handleClick(Grade.Again)
+            })
+          Button("困难")
+            .onClick(() => {
+              this.handleClick(Grade.Hard)
+            })
+          Button("一般")
+            .onClick(() => {
+              this.handleClick(Grade.Good)
+            })
+          Button("简单")
+            .onClick(() => {
+              this.handleClick(Grade.Easy)
+            })
+        }
+
+        List(){
+          ForEach(this.cards, (item: Card) => {
+            ListItem(){
+              Text(JSON.stringify(item))
+            }
+          })
+        }
+        .width('100%')
+        .layoutWeight(1)
       }
       .width('100%')
     }
