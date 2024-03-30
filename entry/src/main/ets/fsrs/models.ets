@@ -1,4 +1,4 @@
-import { FsrsDate } from './help';
+import { FsrsDate } from '.';
 
 export type StateType = "New" | "Learning" | "Review" | "Relearning";
 
@@ -19,12 +19,8 @@ export enum Rating {
   Easy = 4,
 }
 
-// export type Grade = Rating
 
 // type ExcludeManual<T> = Exclude<T, Rating.Manual>;
-
-// export type Grade = ExcludeManual<Rating>;
-
 
 export enum Grade {
   Again = 1,
@@ -33,57 +29,53 @@ export enum Grade {
   Easy = 4,
 }
 
-
 export interface ReviewLog {
-  rating: Rating; // 复习的评级（手动变更，重来，困难，良好，容易）
-  state: State; // 复习的状态（新卡片、学习中、复习中、重新学习中）
-  due: FsrsDate; // 上次的调度日期
-  stability: number; // 复习前的记忆稳定性
-  difficulty: number; // 复习前的卡片难度
-  elapsed_days: number; // 自上次复习以来的天数
-  last_elapsed_days: number; // 上次复习的间隔天数
-  scheduled_days: number; // 下次复习的间隔天数
-  review: FsrsDate; // 复习的日期
+  rating: Rating; // Rating of the review (Again, Hard, Good, Easy)
+  state: State; // State of the review (New, Learning, Review, Relearning)
+  due: Date;  // Date of the last scheduling
+  stability: number; // Memory stability during the review
+  difficulty: number; // Difficulty of the card during the review
+  elapsed_days: number; // Number of days elapsed since the last review
+  last_elapsed_days: number; // Number of days between the last two reviews
+  scheduled_days: number; // Number of days until the next review
+  review: Date; // Date of the review
 }
 
 export interface RecordLogItem {
   card: Card;
   log: ReviewLog;
-}
-;
-
+};
 // export type RecordLog = {
 //   [key in Grade]: RecordLogItem;
 // };
-
 export type RecordLog = Record<Grade, RecordLogItem>
 
 export interface Card {
-  due: FsrsDate; // 卡片下次复习的日期
-  stability: number; // 记忆稳定性
-  difficulty: number; // 卡片难度
-  elapsed_days: number; // 自上次复习以来的天数
-  scheduled_days: number; // 下次复习的间隔天数
-  reps: number; // 卡片被复习的总次数
-  lapses: number; // 卡片被遗忘或错误记忆的次数
-  state: State; // 卡片的当前状态（新卡片、学习中、复习中、重新学习中）
-  last_review?: FsrsDate; // 最近的复习日期（如果适用）
+  due: Date; // Due date
+  stability: number; // Stability
+  difficulty: number; // Difficulty level
+  elapsed_days: number; // Number of days elapsed
+  scheduled_days: number; // Number of days scheduled
+  reps: number; // Repetition count
+  lapses: number; // Number of lapses or mistakes
+  state: State; // Card's state (New, Learning, Review, Relearning)
+  last_review?: Date; // Date of the last review (optional)
 }
 
 export interface CardInput extends Omit<Card, "state" | "due" | "last_review"> {
-  state: StateType | State; // 卡片状态（新建、学习、复习、重新学习）
-  due: DateInput; // 期限
-  last_review?: DateInput | null; // 上次审核日期（可选）
+  state: StateType | State; // Card's state (New, Learning, Review, Relearning)
+  due: DateInput; // Due date
+  last_review?: DateInput | null; // Date of the last review (optional)
 }
 
-export type DateInput = FsrsDate | number | string;
+export type DateInput =  FsrsDate | Date | number | string;
 
 export interface ReviewLogInput
-extends Omit<ReviewLog, "rating" | "state" | "due" | "review"> {
-  rating: RatingType | Rating; // 评论评分（再次，困难，良好，简单）
-  state: StateType | State; // 卡片状态（新建、学习、复习、重新学习）
-  due: DateInput; // 期限
-  review: DateInput; // 上次审查日期
+  extends Omit<ReviewLog, "rating" | "state" | "due" | "review"> {
+  rating: RatingType | Rating; // Rating of the review (Again, Hard, Good, Easy)
+  state: StateType | State; // Card's state (New, Learning, Review, Relearning)
+  due: DateInput; // Due date
+  review: DateInput; // Date of the last review
 }
 
 export interface FSRSParameters {
@@ -95,6 +87,5 @@ export interface FSRSParameters {
 
 export interface RescheduleOptions {
   enable_fuzz?: boolean;
-  dateHandler?: (date: FsrsDate) => DateInput;
-}
-;
+  dateHandler?: (date: Date) => DateInput;
+};

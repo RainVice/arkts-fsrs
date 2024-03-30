@@ -1,5 +1,5 @@
 import { Card, DateInput, FSRSParameters, State } from "./models";
-import { fixDate, FsrsDate } from "./help";
+import { fixDate } from "./help";
 
 export const default_request_retention = 0.9;
 export const default_maximum_interval = 36500;
@@ -52,9 +52,12 @@ export const generatorParameters = (
  * const card: CardUnChecked = createEmptyCard(new Date(), cardAfterHandler);
  * ```
  */
-export function createEmptyCard<R = Card>(now?: DateInput, afterHandler?: (card: Card) => R,): R {
+export function createEmptyCard<R = Card>(
+  now?: DateInput,
+  afterHandler?: (card: Card) => R,
+): R {
   const emptyCard: Card = {
-    due: now ? fixDate(now) : new FsrsDate(),
+    due: now ? fixDate(now) : new Date(),
     stability: 0,
     difficulty: 0,
     elapsed_days: 0,

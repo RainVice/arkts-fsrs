@@ -1,5 +1,6 @@
-import type { unit } from "./type";
-import { DateInput, Grade, RatingType, StateType, Rating, State  } from './models';
+import type { int, unit } from "./type";
+import type { DateInput, Grade, RatingType, StateType } from './models';
+import { Rating, State } from './models';
 
 // declare global {
 //   export interface Date {
@@ -35,7 +36,12 @@ import { DateInput, Grade, RatingType, StateType, Rating, State  } from './model
 // };
 
 export class FsrsDate extends Date{
-  scheduler(t: number, isDay?: boolean): FsrsDate {
+
+  constructor(date:Date){
+    super(date)
+  }
+
+  scheduler(t: number, isDay?: boolean): Date {
     return date_scheduler(this, t, isDay);
   };
 
@@ -44,7 +50,7 @@ export class FsrsDate extends Date{
    * @param pre 比当前时间还要之前
    * @param unit 单位: days | minutes
    */
-  diff(pre: FsrsDate, unit: unit): number {
+  diff(pre: Date, unit: unit): number {
     return date_diff(this, pre, unit);
   };
 
@@ -52,7 +58,7 @@ export class FsrsDate extends Date{
     return formatDate(this);
   };
 
-  dueFormat (last_review: FsrsDate, unit?: boolean,timeUnit?: string[]) {
+  dueFormat (last_review: Date, unit?: boolean,timeUnit?: string[]) {
     return show_diff_message(this, last_review, unit, timeUnit);
   };
 }
@@ -65,8 +71,8 @@ export class FsrsDate extends Date{
  * @param isDay （可选）是否按天数单位进行偏移，默认为 false，表示按分钟单位计算偏移
  * @returns 偏移后的日期和时间对象
  */
-export function date_scheduler(now: DateInput, t: number, isDay?: boolean): FsrsDate {
-  return new FsrsDate(
+export function date_scheduler(now: DateInput, t: number, isDay?: boolean): Date {
+  return new Date(
     isDay
       ? fixDate(now).getTime() + t * 24 * 60 * 60 * 1000
       : fixDate(now).getTime() + t * 60 * 1000,
@@ -141,12 +147,12 @@ export function fixDate(value: DateInput) {
   } else if (typeof value === "string") {
     const timestamp = Date.parse(value);
     if (!isNaN(timestamp)) {
-      return new FsrsDate(timestamp);
+      return new Date(timestamp);
     } else {
       throw new Error(`Invalid date:[${value}]`);
     }
   } else if (typeof value === "number") {
-    return new FsrsDate(value);
+    return new Date(value);
   }
   throw new Error(`Invalid date:[${value}]`);
 }
@@ -156,7 +162,8 @@ export function fixState(value: StateType | State): State {
     const val = value as string;
     const firstLetter = val.charAt(0).toUpperCase();
     const restOfString = val.slice(1).toLowerCase();
-    const ret = Object.keys(State).indexOf(`${firstLetter}${restOfString}`) as State;
+    const ret: State = State[`${firstLetter}${restOfString}`]
+    // const ret = Object.values(State).indexOf(`${firstLetter}${restOfString}`) as State;
     if(ret === undefined){
       throw new Error(`Invalid state:[${value}]`);
     }
@@ -172,7 +179,8 @@ export function fixRating(value: RatingType | Rating): Rating {
     const val = value as string;
     const firstLetter = val.charAt(0).toUpperCase();
     const restOfString = val.slice(1).toLowerCase();
-    const ret = Object.keys(Rating).indexOf(`${firstLetter}${restOfString}`) as Rating;
+    const ret: Rating = Rating[`${firstLetter}${restOfString}`]
+    // const ret = Object.keys(Rating).indexOf(`${firstLetter}${restOfString}`) as Rating;
     if(ret === undefined){
       throw new Error(`Invalid rating:[${value}]`);
     }
@@ -184,15 +192,16 @@ export function fixRating(value: RatingType | Rating): Rating {
 }
 
 
-export const Grades: Readonly<Grade[]> = [Grade.Again, Grade.Hard, Grade.Good, Grade.Easy];
+// export const Grades: Readonly<Grade[]> = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy];
 
-export interface FuzzRanges{
-  start: number,
-  end: number,
+
+interface Fuzz{
+  start: number
+  end: number
   factor: number
 }
 
-const FUZZ_RANGES: FuzzRanges[] = [
+const FUZZ_RANGES :Fuzz[] = [
   {
     start: 2.5,
     end: 7.0,
@@ -208,18 +217,13 @@ const FUZZ_RANGES: FuzzRanges[] = [
     end: Infinity,
     factor: 0.05,
   },
-]
-
-export interface IVL{
-  min_ivl: number,
-  max_ivl: number
-}
+];
 
 export function get_fuzz_range(
   interval: number,
   elapsed_days: number,
   maximum_interval: number,
-): IVL {
+) {
   let delta = 1.0;
   for (const range of FUZZ_RANGES) {
     delta +=
@@ -232,5 +236,13 @@ export function get_fuzz_range(
     min_ivl = Math.max(min_ivl, elapsed_days + 1);
   }
   min_ivl = Math.min(min_ivl, max_ivl);
-  return {min_ivl, max_ivl};
+  return [min_ivl, max_ivl];
 }
+
+export function copyObject<T>(traget: object, source: object) {
+  Object.keys(source).forEach((key) => {
+    traget[key] = source[key]
+  })
+  return traget as T
+}
+

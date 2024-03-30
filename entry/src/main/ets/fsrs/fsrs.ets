@@ -1,5 +1,5 @@
 import { SchedulingCard } from "./scheduler";
-import { date_scheduler, fixDate, fixRating, fixState, FsrsDate } from "./help";
+import { copyObject, date_scheduler, fixDate, fixRating, fixState, FsrsDate, } from "./help";
 import {
   Card,
   CardInput,
@@ -13,38 +13,45 @@ import {
   ReviewLogInput,
   State,
 } from "./models";
+import type { int } from "./type";
 import { FSRSAlgorithm } from "./algorithm";
 
 export class FSRS extends FSRSAlgorithm {
   constructor(param: Partial<FSRSParameters>) {
     super(param);
   }
-
   private preProcessCard(_card: CardInput | Card): Card {
-    const card = JSON.parse(JSON.stringify(_card)) as Card
-    card.due = fixDate(_card.due)
+    let card: Partial<Card> = {}
+    card = copyObject<Card>(card, _card)
+
     card.state = fixState(_card.state)
+    card.due = fixDate(_card.due)
     card.last_review = _card.last_review ? fixDate(_card.last_review) : undefined
-    return card;
+
+    return card as Card
   }
 
-  private preProcessDate(_date: DateInput): FsrsDate {
+  private preProcessDate(_date: DateInput): Date {
     return fixDate(_date);
   }
 
   private preProcessLog(_log: ReviewLogInput | ReviewLog): ReviewLog {
-    const log: ReviewLog = JSON.parse(JSON.stringify(_log)) as ReviewLog
+
+    let log: Partial<ReviewLog> = {}
+    log = copyObject<ReviewLog>(log, _log)
+
     log.due = fixDate(_log.due)
     log.rating = fixRating(_log.rating)
     log.state = fixState(_log.state)
     log.review = fixDate(_log.review)
-    return _log as ReviewLog;
+
+    return log as ReviewLog
   }
 
   /**
-   * @param card 待处理的卡
-   * @param now 当前时间或预定时间
-   * @param afterHandler 将结果转换为另一种类型。（可选）
+   * @param card Card to be processed
+   * @param now Current time or scheduled time
+   * @param afterHandler Convert the result to another type. (Optional)
    * @example
    * ```
    * const card: Card = createEmptyCard(new Date());
@@ -109,17 +116,17 @@ export class FSRS extends FSRSAlgorithm {
       processedCard.state,
     );
     this.seed = String(now.getTime()) + String(processedCard.reps);
-    let easy_interval: number, good_interval: number, hard_interval: number;
+    let easy_interval = 0, good_interval = 0, hard_interval = 0;
     const interval = processedCard.elapsed_days;
     switch (processedCard.state) {
       case State.New:
         this.init_ds(s);
-        s.again.due = now.scheduler(1);
-        s.hard.due = now.scheduler(5);
-        s.good.due = now.scheduler(10);
+        s.again.due = (new FsrsDate(now)).scheduler(1 as int);
+        s.hard.due = (new FsrsDate(now)).scheduler(5 as int);
+        s.good.due = (new FsrsDate(now)).scheduler(10 as int);
         easy_interval = this.next_interval(s.easy.stability, interval);
         s.easy.scheduled_days = easy_interval;
-        s.easy.due = now.scheduler(easy_interval, true);
+        s.easy.due = (new FsrsDate(now)).scheduler(easy_interval, true);
         break;
       case State.Learning:
       case State.Relearning:
@@ -158,14 +165,14 @@ export class FSRS extends FSRSAlgorithm {
 
   get_retrievability = (
     card: CardInput | Card,
-    now: FsrsDate,
+    now: Date,
   ): undefined | string => {
     const processedCard = this.preProcessCard(card);
     now = this.preProcessDate(now);
     if (processedCard.state !== State.Review) {
       return undefined;
     }
-    const t = Math.max(now.diff(processedCard.last_review as FsrsDate, "days"), 0);
+    const t = Math.max((new FsrsDate(now)).diff(processedCard.last_review as Date, "days"), 0);
     return (
       (this.forgetting_curve(t, processedCard.stability) * 100).toFixed(2) + "%"
     );
@@ -206,11 +213,12 @@ export class FSRS extends FSRSAlgorithm {
     if (processedLog.rating === Rating.Manual) {
       throw new Error("Cannot rollback a manual rating");
     }
-    let last_due: FsrsDate, last_review: FsrsDate
-    let last_lapses: number
+    let last_due: DateInput, last_review: DateInput | undefined;
+    let last_lapses = 0;
     switch (processedLog.state) {
       case State.New:
         last_due = processedLog.due;
+        last_review = undefined;
         last_lapses = 0;
         break;
       case State.Learning:
@@ -218,23 +226,33 @@ export class FSRS extends FSRSAlgorithm {
       case State.Review:
         last_due = processedLog.review;
         last_review = processedLog.due;
-        last_lapses = processedCard.lapses - (processedLog.rating === Rating.Again && processedLog.state === State.Review ? 1 : 0);
+        last_lapses =
+          processedCard.lapses -
+            (processedLog.rating === Rating.Again &&
+              processedLog.state === State.Review
+              ? 1
+              : 0);
         break;
     }
 
-    const prevCard: Card = {
-      due: last_due,
-      stability: processedLog.stability,
-      difficulty: processedLog.difficulty,
-      elapsed_days: processedLog.last_elapsed_days,
-      scheduled_days: processedLog.scheduled_days,
-      reps: Math.max(0, processedCard.reps - 1),
-      lapses: Math.max(0, last_lapses),
-      state: processedLog.state,
-      last_review: last_review!,
-    };
+
+    let prevCard: Partial<Card> = {}
+
+    prevCard = copyObject<Card>(prevCard, processedCard)
+
+
+    prevCard.due = last_due
+    prevCard.stability = processedLog.stability
+    prevCard.difficulty = processedLog.difficulty
+    prevCard.elapsed_days = processedLog.last_elapsed_days
+    prevCard.scheduled_days = processedLog.scheduled_days
+    prevCard.reps = Math.max(0, processedCard.reps - 1)
+    prevCard.lapses = Math.max(0, last_lapses)
+    prevCard.state = processedLog.state
+    prevCard.last_review = last_review as Date
+
     if (afterHandler && typeof afterHandler === "function") {
-      return afterHandler(prevCard);
+      return afterHandler(prevCard as Card);
     } else {
       return prevCard as R;
     }
@@ -302,7 +320,7 @@ export class FSRS extends FSRSAlgorithm {
     const scheduled_days =
       processedCard.state === State.New
         ? 0
-        : now.diff(processedCard.last_review as FsrsDate, "days");
+        : (new FsrsDate(now)).diff(processedCard.last_review as Date, "days");
     const forget_log: ReviewLog = {
       rating: Rating.Manual,
       state: processedCard.state,
@@ -314,18 +332,23 @@ export class FSRS extends FSRSAlgorithm {
       scheduled_days: scheduled_days,
       review: now,
     };
-    const forget_card: Card = {
-      due: now,
-      stability: 0,
-      difficulty: 0,
-      elapsed_days: 0,
-      scheduled_days: 0,
-      reps: reset_count ? 0 : processedCard.reps,
-      lapses: reset_count ? 0 : processedCard.lapses,
-      state: State.New,
-      last_review: processedCard.last_review,
-    };
-    const recordLogItem: RecordLogItem = { card: forget_card, log: forget_log };
+
+
+    let forget_card: Partial<Card> = {}
+    forget_card = copyObject<Card>(forget_card, processedCard)
+
+
+    forget_card.due = now as Date
+    forget_card.stability = 0
+    forget_card.difficulty = 0
+    forget_card.elapsed_days = 0
+    forget_card.scheduled_days = 0
+    forget_card.reps = reset_count ? 0 : processedCard.reps
+    forget_card.lapses = reset_count ? 0 : processedCard.lapses
+    forget_card.state = State.New
+    forget_card.last_review = processedCard.last_review
+
+    const recordLogItem: RecordLogItem = { card: forget_card as Card, log: forget_log };
     if (afterHandler && typeof afterHandler === "function") {
       return afterHandler(recordLogItem);
     } else {
@@ -369,7 +392,7 @@ export class FSRS extends FSRSAlgorithm {
     const processedCard: T[] = [];
     for (const card of cards) {
       if (fixState(card.state) !== State.Review || !card.last_review) continue;
-      const scheduled_days = Math.floor(card.scheduled_days);
+      const scheduled_days = Math.floor(card.scheduled_days) as int;
       const next_ivl = this.next_interval(
         Math.abs(parseFloat(card.stability.toFixed(2))),
         Math.round(card.elapsed_days),
@@ -377,15 +400,17 @@ export class FSRS extends FSRSAlgorithm {
       );
       if (next_ivl === scheduled_days || next_ivl === 0) continue;
 
-      const processCard: T = JSON.parse(JSON.stringify(card));
+      let processCard: Partial<Card> = {}
+      processCard = copyObject<Card>(processCard, processedCard)
+
       processCard.scheduled_days = next_ivl;
       const new_due = date_scheduler(processCard.last_review!, next_ivl, true);
       if (options.dateHandler && typeof options.dateHandler === "function") {
-        processCard.due = options.dateHandler(new_due);
+        processCard.due = options.dateHandler(new_due) as Date;
       } else {
         processCard.due = new_due;
       }
-      processedCard.push(processCard);
+      processedCard.push(processCard as T);
     }
     return processedCard;
   }

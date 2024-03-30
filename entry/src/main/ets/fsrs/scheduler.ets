@@ -1,23 +1,25 @@
 import { Card, Rating, RecordLog, State } from "./models";
-import { date_scheduler, FsrsDate } from "./help";
+import { copyObject, date_scheduler, FsrsDate } from "./help";
 
 export class SchedulingCard {
   again: Card;
   hard: Card;
   good: Card;
   easy: Card;
-  last_review: FsrsDate;
+  last_review: Date;
   last_elapsed_days: number;
 
   private copy(card: Card): Card {
-    return JSON.parse(JSON.stringify(card))
+    let _card: Partial<Card> = {}
+    _card = copyObject<Card>(_card,card)
+    return _card as Card
   }
 
-  constructor(card: Card, now: FsrsDate) {
+  constructor(card: Card, now: Date) {
     this.last_review = card.last_review || card.due;
     this.last_elapsed_days = card.elapsed_days;
     card.elapsed_days =
-      card.state === State.New ? 0 : now.diff(card.last_review as FsrsDate, "days"); //相距时间
+      card.state === State.New ? 0 : (new FsrsDate(now)).diff(card.last_review as Date, "days"); //相距时间
     card.last_review = now; // 上次复习时间
     card.reps += 1;
     this.again = this.copy(card);
@@ -48,7 +50,7 @@ export class SchedulingCard {
   }
 
   schedule(
-    now: FsrsDate,
+    now: Date,
     hard_interval: number,
     good_interval: number,
     easy_interval: number,
@@ -67,13 +69,7 @@ export class SchedulingCard {
     return this;
   }
 
-  record_log(card: Card, now: FsrsDate): RecordLog {
-    //   Manual = 0,
-    //   Again = 1,
-    //   Hard = 2,
-    //   Good = 3,
-    //   Easy = 4,
-
+  record_log(card: Card, now: Date): RecordLog {
     return {
       1: {
         card: this.again,

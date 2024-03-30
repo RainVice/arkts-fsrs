@@ -1,4 +1,4 @@
-import { Card, createEmptyCard, fsrs, FSRS, FsrsDate, Grade, ReviewLog } from '../fsrs';
+import { Card, createEmptyCard, fsrs, FSRS, Grade, ReviewLog } from '../fsrs';
 
 @Entry
 @Component
@@ -8,10 +8,12 @@ struct Index {
   @State logs: ReviewLog[] = []
   @State cards: Card[] = []
 
+  @State now : Date = new Date()
+
 
   handleClick(grade:Grade){
-    const log = this.f.repeat(this.card,new FsrsDate())[grade].log;
-    this.card = this.f.repeat(this.card,new FsrsDate())[grade].card;
+    const log = this.f.repeat(this.card,new Date())[grade].log;
+    this.card = this.f.repeat(this.card,new Date())[grade].card;
 
     this.logs.unshift(log);
     this.cards.unshift(this.card);
@@ -46,10 +48,12 @@ struct Index {
             })
         }
 
+        Text(this.now.toString())
+
         List(){
           ForEach(this.cards, (item: Card) => {
             ListItem(){
-              Text(JSON.stringify(item))
+              Text(item.due.toTimeString() + " " + item.last_review?.toTimeString())
             }
           })
         }
