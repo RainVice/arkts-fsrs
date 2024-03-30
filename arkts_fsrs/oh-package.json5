@@ -1,9 +1,9 @@
 {
-  "name": "arkts-fsrs",
+  "name": "@rv/ts-fsrs",
   "version": "3.5.3",
-  "description": "arkts-fsrs 是一个基于ArkTS开发的包 ，用于实现自由间隔重复调度器（FSRS）算法 的工具。它可以帮助开发者将FSRS应用到他们的记忆卡应用中，从而提升用户的学习体验",
+  "description": "ts-fsrs 是一个基于ArkTS开发的包 ，用于实现自由间隔重复调度器（FSRS）算法 的工具。它可以帮助开发者将FSRS应用到他们的记忆卡应用中，从而提升用户的学习体验",
   "main": "Index.ets",
-  "author": "",
+  "author": "rainvice",
   "license": "Apache-2.0",
   "dependencies": {
     "seedrandom": "^3.0.5"

@@ -6,7 +6,7 @@
   "author": "",
   "license": "",
   "dependencies": {
-    "arkts-fsrs": "file:../arkts_fsrs"
+    "@rv/ts-fsrs": "file:../arkts_fsrs"
   }
 }
 
