@@ -6,7 +6,7 @@
   "author": "",
   "license": "",
   "dependencies": {
-    "seedrandom": "^3.0.5",
+    "arkts-fsrs": "file:../arkts_fsrs"
   }
 }
 

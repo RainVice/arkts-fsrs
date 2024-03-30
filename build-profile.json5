@@ -31,6 +31,10 @@
           ]
         }
       ]
+    },
+    {
+      "name": "arkts_fsrs",
+      "srcPath": "./arkts_fsrs"
     }
   ]
 }

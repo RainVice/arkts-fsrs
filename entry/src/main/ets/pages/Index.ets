@@ -1,4 +1,4 @@
-import { Card, createEmptyCard, fsrs, FSRS, Grade, ReviewLog } from '../fsrs';
+import { Card, createEmptyCard, fsrs, FSRS, Grade, ReviewLog } from 'arkts-fsrs';
 
 @Entry
 @Component
