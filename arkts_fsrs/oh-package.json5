@@ -5,6 +5,7 @@
   "main": "Index.ets",
   "author": "rainvice",
   "license": "MIT",
+  "repository": "https://github.com/RainVice/fsrs",
   "dependencies": {
     "seedrandom": "^3.0.5"
   }
